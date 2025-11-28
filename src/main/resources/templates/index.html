@@ -160,6 +160,22 @@
                 </div>
             </div>
 
+            <!-- AI Final Report (추가: 기존 디자인 절대 변경 없음) -->
+            <div id="finalReportContainer" class="analysis-card hidden" aria-live="polite" aria-atomic="true">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px;">
+                    <h3 style="margin:0; font-size:1.125rem;">📄 AI 최종 분석 리포트</h3>
+                    <div style="display:flex; gap:8px;">
+                        <button id="generateReportBtn" class="report-small-btn" type="button">AI 리포트 생성</button>
+                        <button id="downloadReportBtn" class="report-small-btn" type="button" disabled>다운로드</button>
+                    </div>
+                </div>
+
+                <!-- 실제 리포트 HTML이 들어갈 곳 (마크다운 → HTML 렌더링) -->
+                <div id="finalReport" class="report-content" style="max-height:280px; overflow:auto; padding:16px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-tertiary); color:var(--text-secondary);">
+                    <p style="margin:0;">AI 리포트를 생성하려면 <strong>AI 리포트 생성</strong> 버튼을 클릭하세요.</p>
+                </div>
+            </div>
+
             <!-- Order Timing Guide -->
             <div class="analysis-card timing-card">
                 <h3>발주 타이밍 가이드</h3>
@@ -258,21 +274,6 @@
                         <span class="detail-label">순 마진</span>
                         <span class="detail-value" id="detailNetMargin">-</span>
                     </div>
-                </div>
-            </div>
-            <!-- AI Final Report (추가: 기존 디자인 절대 변경 없음) -->
-            <div id="finalReportContainer" class="analysis-card hidden" aria-live="polite" aria-atomic="true">
-                <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px;">
-                    <h3 style="margin:0; font-size:1.125rem;">📄 AI 최종 분석 리포트</h3>
-                    <div style="display:flex; gap:8px;">
-                        <button id="generateReportBtn" class="report-small-btn" type="button">AI 리포트 생성</button>
-                        <button id="downloadReportBtn" class="report-small-btn" type="button" disabled>다운로드</button>
-                    </div>
-                </div>
-
-                <!-- 실제 리포트 HTML이 들어갈 곳 (마크다운 → HTML 렌더링) -->
-                <div id="finalReport" class="report-content" style="max-height:280px; overflow:auto; padding:16px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-tertiary); color:var(--text-secondary);">
-                    <p style="margin:0;">AI 리포트를 생성하려면 <strong>AI 리포트 생성</strong> 버튼을 클릭하세요.</p>
                 </div>
             </div>
 

@@ -161,6 +161,8 @@ function initForm() {
 async function performAnalysis(formData) {
     showLoading();
 
+    window.lastFormData = formData;
+
     try {
         const response = await fetch('/api/analyze', {
             method: 'POST',
@@ -169,6 +171,9 @@ async function performAnalysis(formData) {
             },
             body: JSON.stringify(formData)
         });
+
+        const container = document.getElementById('finalReportContainer');
+        if (container) container.classList.remove('hidden');
 
         if (!response.ok) {
             throw new Error('분석 요청 실패');
