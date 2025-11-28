@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HedgeLeader - 실시간 환율 손익 분석</title>
+    <title>ForexPulse - 실시간 환율 손익 분석</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
 </head>
 <body class="light-mode">
     <!-- Header -->
@@ -218,24 +219,24 @@
                 </div>
                 <div class="ai-evaluation">
                     <h4>🤖 AI 분석 의견</h4>
-                    <p id="aiEvaluation">-</p>
+                    <p id="aiEvaluation" style="white-space: pre-wrap;">-</p>
                 </div>
             </div>
 
             <!-- AI Monitoring Strategy -->
-            <div class="analysis-card strategy-card">
+            <div class="analysis-card strategy-card hidden">
                 <h3>📊 환율 모니터링 전략</h3>
                 <div class="strategy-content" id="monitoringStrategy">-</div>
             </div>
 
             <!-- Scenario Analysis Chart -->
-            <div class="analysis-card chart-card">
+            <div class="analysis-card chart-card hidden">
                 <h3>환율 시나리오별 원가 및 마진</h3>
                 <canvas id="scenarioChart"></canvas>
             </div>
 
             <!-- Margin Rate Change Chart -->
-            <div class="analysis-card chart-card">
+            <div class="analysis-card chart-card hidden">
                 <h3>환율 변동에 따른 마진율 변화</h3>
                 <canvas id="marginRateChart"></canvas>
             </div>

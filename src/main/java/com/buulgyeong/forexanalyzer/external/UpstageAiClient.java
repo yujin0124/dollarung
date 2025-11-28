@@ -162,6 +162,7 @@ public class UpstageAiClient {
 
         try {
             log.info("Upstage AI API 호출 완료");
+            System.out.println("Upstage AI API 호출 완료");
             return callUpstageApi(prompt);
         } catch (Exception e) {
             log.warn("Upstage AI API 호출 실패: {}", e.getMessage());

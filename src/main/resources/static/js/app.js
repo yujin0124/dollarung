@@ -495,11 +495,7 @@ function hideLoading() {
 
         if (dlBtn) {
             dlBtn.addEventListener('click', function() {
-                const contentEl = document.getElementById('finalReport');
-                if (!contentEl) return;
-                const text = contentEl.innerText || contentEl.textContent || '';
-                if (!text.trim()) { alert('다운로드할 리포트가 없습니다.'); return; }
-                downloadTextAsFile(text, 'ai-final-report.md');
+                downloadTextAsFile('finalReport', 'ai-final-report')
             });
         }
     }
@@ -548,18 +544,80 @@ function hideLoading() {
         }
     }
 
-    // 파일로 다운로드 (마크다운 텍스트)
-    function downloadTextAsFile(text, filename) {
-        const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        setTimeout(() => {
-            URL.revokeObjectURL(link.href);
-            link.remove();
-        }, 500);
+//    // PDF로 다운로드
+//    function downloadTextAsFile(text, filename) {
+//        const element = document.getElementById('finalReport');
+//        html2pdf()
+//            .from(element)
+//            .save('ai-analysis-report.pdf');
+//    }
+
+    // 안전한 PDF 다운로드 함수 (html2pdf 사용)
+    // - elementId: 캡처할 DOM ID (예: 'finalReport')
+    // - filename: 저장할 파일명 (확장자 제외)
+    async function downloadTextAsFile(elementId, filename = 'ai-analysis-report') {
+        const container = document.getElementById('finalReportContainer');
+        const element = document.getElementById(elementId);
+
+        if (!element) {
+            alert('리포트 요소를 찾을 수 없습니다.');
+            return;
+        }
+
+        // 1) 요소가 숨겨져 있으면 임시로 보여주기
+        let restoredHidden = false;
+        if (container && container.classList.contains('hidden')) {
+            container.classList.remove('hidden');
+            restoredHidden = true;
+        }
+
+        // 2) 폰트/이미지 로드 대기 (웹폰트가 느리게 로딩되는 경우 방지)
+        try {
+            if (document.fonts && document.fonts.ready) {
+                await document.fonts.ready;
+            }
+        } catch (e) {
+            // 폰트 API가 없으면 무시
+            console.warn('Font loading wait failed or not supported.', e);
+        }
+
+        // 3) 임시 스타일 적용 (캔버스에서 보이지 않는 상황 방지)
+        const originalStyle = element.getAttribute('style') || '';
+        element.style.background = element.style.background || '#ffffff';
+        element.style.color = element.style.color || '#000000';
+        element.style.whiteSpace = element.style.whiteSpace || 'pre-wrap';
+        // 필요하면 폭 확보
+        element.style.width = element.style.width || element.scrollWidth + 'px';
+
+        // 4) html2pdf 옵션 (html2canvas 옵션 포함)
+        const opt = {
+            margin:       20,
+            filename:     filename + '.pdf',
+            image:        { type: 'jpeg', quality: 0.95 },
+            html2canvas:  {
+                scale: 2,                 // 해상도 향상
+                useCORS: true,           // 외부 이미지/폰트 허용 (cross-origin)
+                width: element.scrollWidth,
+                allowTaint: true,
+                logging: false,
+                backgroundColor: '#2a2a2a' // html2canvas v1.x 에서는 background 옵션이 다름; 대신 스타일로 처리
+            },
+            jsPDF:        { unit: 'pt', format: 'a4', orientation: 'portrait' }
+        };
+
+        try {
+            // 5) 생성 — Promise 기반
+            await html2pdf().set(opt).from(element).save();
+        } catch (err) {
+            console.error('PDF 생성 실패', err);
+            alert('PDF 생성 중 오류가 발생했습니다. 콘솔을 확인하세요.');
+        } finally {
+            // 6) 원래 스타일/숨김 상태 복원
+            element.setAttribute('style', originalStyle);
+            if (restoredHidden && container) {
+                container.classList.add('hidden');
+            }
+        }
     }
 
     // DOMContentLoaded 시 바인딩
