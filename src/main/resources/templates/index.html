@@ -57,7 +57,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- 30일 환율 추이 그래프 -->
             <div class="chart-container">
                 <h3>30일 환율 추이</h3>
@@ -77,53 +77,53 @@
                         <label for="materialCostUsd">원자재 단가 (USD)</label>
                         <div class="input-wrapper">
                             <span class="input-prefix">$</span>
-                            <input type="number" id="materialCostUsd" name="materialCostUsd" 
-                                   th:value="${companyInput.materialCostUsd}" step="0.01" min="0" required>
+                            <input type="number" id="materialCostUsd" name="materialCostUsd"
+                                   th:value="${companyInput.materialCostUsd}" step="any" min="0" required>
                         </div>
                         <span class="input-hint">제품 1개당 소요되는 원자재 비용</span>
                     </div>
-                    
+
                     <div class="input-group">
                         <label for="materialRatio">원자재 사용 비중 (%)</label>
                         <div class="input-wrapper">
-                            <input type="number" id="materialRatio" name="materialRatio" 
-                                   th:value="${companyInput.materialRatio}" step="0.1" min="0.01" max="100" required>
+                            <input type="number" id="materialRatio" name="materialRatio"
+                                   th:value="${companyInput.materialRatio}" step="any" min="0.01" max="100" required>
                             <span class="input-suffix">%</span>
                         </div>
                         <span class="input-hint">전체 원가 중 원자재가 차지하는 비율</span>
                     </div>
-                    
+
                     <div class="input-group">
                         <label for="sellingPriceKrw">납품 단가 (KRW)</label>
                         <div class="input-wrapper">
                             <span class="input-prefix">₩</span>
-                            <input type="number" id="sellingPriceKrw" name="sellingPriceKrw" 
+                            <input type="number" id="sellingPriceKrw" name="sellingPriceKrw"
                                    th:value="${companyInput.sellingPriceKrw}" step="1" min="0" required>
                         </div>
                         <span class="input-hint">고객에게 납품하는 제품 1개당 가격</span>
                     </div>
-                    
+
                     <div class="input-group">
                         <label for="targetMarginRate">목표 마진율 (%)</label>
                         <div class="input-wrapper">
-                            <input type="number" id="targetMarginRate" name="targetMarginRate" 
-                                   th:value="${companyInput.targetMarginRate}" step="0.1" min="0" max="100" required>
+                            <input type="number" id="targetMarginRate" name="targetMarginRate"
+                                   th:value="${companyInput.targetMarginRate}" step="any" min="0" max="100" required>
                             <span class="input-suffix">%</span>
                         </div>
                         <span class="input-hint">목표로 하는 영업이익률</span>
                     </div>
-                    
+
                     <div class="input-group full-width">
                         <label for="otherCostsKrw">기타 비용 (KRW)</label>
                         <div class="input-wrapper">
                             <span class="input-prefix">₩</span>
-                            <input type="number" id="otherCostsKrw" name="otherCostsKrw" 
+                            <input type="number" id="otherCostsKrw" name="otherCostsKrw"
                                    th:value="${companyInput.otherCostsKrw}" step="1" min="0" required>
                         </div>
                         <span class="input-hint">물류비, 관세, 가공비 등 기타 비용</span>
                     </div>
                 </div>
-                
+
                 <button type="submit" class="submit-btn">
                     <span class="btn-text">분석하기</span>
                     <span class="btn-icon">→</span>
@@ -157,6 +157,22 @@
                         <span class="metric-value" id="targetGap">-</span>
                         <span class="metric-badge" id="targetStatus">-</span>
                     </div>
+                </div>
+            </div>
+
+            <!-- AI Final Report (추가: 기존 디자인 절대 변경 없음) -->
+            <div id="finalReportContainer" class="analysis-card hidden" aria-live="polite" aria-atomic="true">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px;">
+                    <h3 style="margin:0; font-size:1.125rem;">📄 AI 최종 분석 리포트</h3>
+                    <div style="display:flex; gap:8px;">
+                        <button id="generateReportBtn" class="report-small-btn" type="button">AI 리포트 생성</button>
+                        <button id="downloadReportBtn" class="report-small-btn" type="button" disabled>다운로드</button>
+                    </div>
+                </div>
+
+                <!-- 실제 리포트 HTML이 들어갈 곳 (마크다운 → HTML 렌더링) -->
+                <div id="finalReport" class="report-content" style="max-height:280px; overflow:auto; padding:16px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-tertiary); color:var(--text-secondary);">
+                    <p style="margin:0;">AI 리포트를 생성하려면 <strong>AI 리포트 생성</strong> 버튼을 클릭하세요.</p>
                 </div>
             </div>
 
@@ -260,6 +276,7 @@
                     </div>
                 </div>
             </div>
+
         </section>
     </main>
 
