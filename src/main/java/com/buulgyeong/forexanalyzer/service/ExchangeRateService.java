@@ -75,7 +75,7 @@ public class ExchangeRateService {
                 .orElse(currentRate);
 
         BigDecimal rate30DaysAgo = last30Days.stream()
-                .filter(r -> r.getDate().equals(today.minusDays(30)))
+                .filter(r -> r.getDate().equals(today.minusDays(29)))
                 .map(HistoricalRate::getRate)
                 .findFirst()
                 .orElse(currentRate);
