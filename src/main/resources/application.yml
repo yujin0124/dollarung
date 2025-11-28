@@ -4,7 +4,7 @@ spring:
 
   config:
     import: optional:file:.env[.properties]
-  
+
   # H2 Database Configuration
   datasource:
     url: jdbc:h2:mem:forexdb

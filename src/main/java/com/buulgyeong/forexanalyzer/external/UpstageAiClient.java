@@ -1,5 +1,8 @@
 package com.buulgyeong.forexanalyzer.external;
 
+import com.buulgyeong.forexanalyzer.dto.DashboardResponse;
+import com.buulgyeong.forexanalyzer.dto.ExchangeRateResponse;
+import com.buulgyeong.forexanalyzer.dto.ProfitLossAnalysisResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +30,7 @@ public class UpstageAiClient {
     public UpstageAiClient(
             WebClient.Builder webClientBuilder,
             ObjectMapper objectMapper,
-            @Value("${external.upstage.api-url}") String apiUrl,
+            @Value("${external.upstage.api-url:}") String apiUrl,
             @Value("${external.upstage.api-key:}") String apiKey) {
         this.webClientBuilder = webClientBuilder;
         this.objectMapper = objectMapper;
@@ -57,6 +60,15 @@ public class UpstageAiClient {
             1. 현재 환율 상태 평가 (발주 적합/부적합)
             2. 예상 마진 상황
             3. 발주 권장 여부
+            
+            [작성 규칙]
+            1. 데이터 기반 분석만 작성하고, 과도한 추측이나 데이터에 없는 정보는 포함하지 않는다.
+            2. 비즈니스 전략·원가 관리 측면에서 해석을 명확히 포함한다.
+            3. **절대로** #, ##, ###, **, -, * 등 마크다운 문법을 사용하지 마라.
+            4. 번호 매기기(1. 2. 3.)와 줄바꿈만 사용해서 일반 텍스트로 작성하라.
+            5. 굵은 글씨, 기울임, 리스트 기호 사용 금지.
+            6. 문단이나 항목 사이에 빈 줄을 넣어서 구분하라.
+            
             """, 
             currentRate.doubleValue(),
             breakEvenRate.doubleValue(),
@@ -94,6 +106,15 @@ public class UpstageAiClient {
             • 환율 모니터링 기준점
             • 환위험 헷지 전략
             • 재고 관리 관련 조언
+            
+            [작성 규칙]
+            1. 데이터 기반 분석만 작성하고, 과도한 추측이나 데이터에 없는 정보는 포함하지 않는다.
+            2. 비즈니스 전략·원가 관리 측면에서 해석을 명확히 포함한다.
+            3. **절대로** #, ##, ###, **, -, * 등 마크다운 문법을 사용하지 마라.
+            4. 번호 매기기(1. 2. 3.)와 줄바꿈만 사용해서 일반 텍스트로 작성하라.
+            5. 굵은 글씨, 기울임, 리스트 기호 사용 금지.
+            6. 문단이나 항목 사이에 빈 줄을 넣어서 구분하라.
+            
             """,
             currentRate.doubleValue(),
             breakEvenRate.doubleValue(),
@@ -108,10 +129,49 @@ public class UpstageAiClient {
             return generateDefaultStrategy(currentRate, breakEvenRate, targetRate, changeRate30Day);
         }
     }
+
+    /**
+     * 최종 분석 보고서 제공
+     */
+    private String generateFinalReport(String exchangeRateData, String profitLossAnalysisResponse) {
+        String prompt = String.format("""
+                당신은 기업의 재무·원가·환율·손익 구조를 설명하는 전문 애널리스트입니다.\s
+                아래 제공되는 OUTPUT DATA는 특정 기업의 실시간 손익 분석 시스템에서 산출된 결과입니다. \s
+                데이터를 기반으로, 해당 기업의 현재 원가 구조, 환율 영향, 마진 상태, 목표 달성 여부를\s
+                전문 분석 리포트 형태로 작성하세요.
+                
+                [OUTPUT DATA]
+                환율 변동 데이터: %s
+                유저 맞춤형 분석 데이터: %s
+                
+                [작성 규칙]
+                1. 데이터 기반 분석만 작성하고, 과도한 추측이나 데이터에 없는 정보는 포함하지 않는다.
+                2. 비즈니스 전략·원가 관리 측면에서 해석을 명확히 포함한다.
+                3. **절대로** #, ##, ###, **, -, * 등 마크다운 문법을 사용하지 마라.
+                4. 번호 매기기(1. 2. 3.)와 줄바꿈만 사용해서 일반 텍스트로 작성하라.
+                5. 굵은 글씨, 기울임, 리스트 기호 사용 금지.
+                6. 문단이나 항목 사이에 빈 줄을 넣어서 구분하라.
+                
+                [리포트 구성]
+                1. 요약(Summary)
+                2. 원가 구조 분석
+                3. 마진 분석
+                4. 리스크 및 개선 포인트
+                5. 종합 의견(Conclusion)
+         """, exchangeRateData, profitLossAnalysisResponse);
+
+        try {
+            log.info("Upstage AI API 호출 완료");
+            return callUpstageApi(prompt);
+        } catch (Exception e) {
+            log.warn("Upstage AI API 호출 실패: {}", e.getMessage());
+            return null;
+        }
+    }
     
     private String callUpstageApi(String prompt) {
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("model", "solar-mini");
+        requestBody.put("model", "solar-pro2");
         requestBody.put("messages", List.of(
             Map.of("role", "user", "content", prompt)
         ));
