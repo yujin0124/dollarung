@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForexPulse - 실시간 환율 손익 분석</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="light-mode">
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <span class="logo-icon">₩</span>
+                <span class="logo-text">ForexPulse</span>
+                <span class="logo-subtitle">부울경 제조업 환율 분석</span>
+            </div>
+            <div class="header-actions">
+                <button id="themeToggle" class="theme-toggle" aria-label="테마 전환">
+                    <span class="sun-icon">☀️</span>
+                    <span class="moon-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Exchange Rate Section -->
+        <section class="exchange-rate-section">
+            <div class="section-header">
+                <h2>실시간 환율</h2>
+                <span class="update-time" id="updateTime">마지막 업데이트: <span th:text="${exchangeRate.lastUpdated}">-</span></span>
+            </div>
+            <div class="exchange-rate-card">
+                <div class="current-rate">
+                    <span class="currency-label">USD/KRW</span>
+                    <span class="rate-value" id="currentRate" th:text="${#numbers.formatDecimal(exchangeRate.currentRate, 1, 1)}">0.0</span>
+                    <span class="rate-unit">원</span>
+                </div>
+                <div class="rate-changes">
+                    <div class="rate-change" th:classappend="${exchangeRate.changeRate1Day >= 0} ? 'positive' : 'negative'">
+                        <span class="change-label">1일</span>
+                        <span class="change-value" th:text="${exchangeRate.changeRate1Day >= 0 ? '+' : ''} + ${#numbers.formatDecimal(exchangeRate.changeRate1Day, 1, 2)} + '%'">0.00%</span>
+                    </div>
+                    <div class="rate-change" th:classappend="${exchangeRate.changeRate7Day >= 0} ? 'positive' : 'negative'">
+                        <span class="change-label">7일</span>
+                        <span class="change-value" th:text="${exchangeRate.changeRate7Day >= 0 ? '+' : ''} + ${#numbers.formatDecimal(exchangeRate.changeRate7Day, 1, 2)} + '%'">0.00%</span>
+                    </div>
+                    <div class="rate-change" th:classappend="${exchangeRate.changeRate30Day >= 0} ? 'positive' : 'negative'">
+                        <span class="change-label">30일</span>
+                        <span class="change-value" th:text="${exchangeRate.changeRate30Day >= 0 ? '+' : ''} + ${#numbers.formatDecimal(exchangeRate.changeRate30Day, 1, 2)} + '%'">0.00%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 30일 환율 추이 그래프 -->
+            <div class="chart-container">
+                <h3>30일 환율 추이</h3>
+                <canvas id="exchangeRateChart" height="300"></canvas>
+            </div>
+        </section>
+
+        <!-- Input Section -->
+        <section class="input-section">
+            <div class="section-header">
+                <h2>기업 정보 입력</h2>
+                <p class="section-description">원가 및 손익 계산을 위한 정보를 입력하세요</p>
+            </div>
+            <form id="companyInputForm" class="input-form">
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="materialCostUsd">원자재 단가 (USD)</label>
+                        <div class="input-wrapper">
+                            <span class="input-prefix">$</span>
+                            <input type="number" id="materialCostUsd" name="materialCostUsd" 
+                                   th:value="${companyInput.materialCostUsd}" step="0.01" min="0" required>
+                        </div>
+                        <span class="input-hint">제품 1개당 소요되는 원자재 비용</span>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="materialRatio">원자재 사용 비중 (%)</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="materialRatio" name="materialRatio" 
+                                   th:value="${companyInput.materialRatio}" step="0.1" min="0.01" max="100" required>
+                            <span class="input-suffix">%</span>
+                        </div>
+                        <span class="input-hint">전체 원가 중 원자재가 차지하는 비율</span>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="sellingPriceKrw">납품 단가 (KRW)</label>
+                        <div class="input-wrapper">
+                            <span class="input-prefix">₩</span>
+                            <input type="number" id="sellingPriceKrw" name="sellingPriceKrw" 
+                                   th:value="${companyInput.sellingPriceKrw}" step="1" min="0" required>
+                        </div>
+                        <span class="input-hint">고객에게 납품하는 제품 1개당 가격</span>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="targetMarginRate">목표 마진율 (%)</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="targetMarginRate" name="targetMarginRate" 
+                                   th:value="${companyInput.targetMarginRate}" step="0.1" min="0" max="100" required>
+                            <span class="input-suffix">%</span>
+                        </div>
+                        <span class="input-hint">목표로 하는 영업이익률</span>
+                    </div>
+                    
+                    <div class="input-group full-width">
+                        <label for="otherCostsKrw">기타 비용 (KRW)</label>
+                        <div class="input-wrapper">
+                            <span class="input-prefix">₩</span>
+                            <input type="number" id="otherCostsKrw" name="otherCostsKrw" 
+                                   th:value="${companyInput.otherCostsKrw}" step="1" min="0" required>
+                        </div>
+                        <span class="input-hint">물류비, 관세, 가공비 등 기타 비용</span>
+                    </div>
+                </div>
+                
+                <button type="submit" class="submit-btn">
+                    <span class="btn-text">분석하기</span>
+                    <span class="btn-icon">→</span>
+                </button>
+            </form>
+        </section>
+
+        <!-- Analysis Results Section -->
+        <section id="analysisResults" class="analysis-section hidden">
+            <!-- Real-time Profit/Loss Analysis -->
+            <div class="analysis-card profit-loss-card">
+                <h3>실시간 손익 분석</h3>
+                <div class="profit-loss-grid">
+                    <div class="metric-card">
+                        <span class="metric-label">현재 제품 원가</span>
+                        <span class="metric-value" id="currentCost">-</span>
+                        <span class="metric-change" id="costChange">-</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">현재 마진</span>
+                        <span class="metric-value" id="currentMargin">-</span>
+                        <span class="metric-sub" id="currentMarginRate">-</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">목표 마진</span>
+                        <span class="metric-value" id="targetMargin">-</span>
+                        <span class="metric-sub" id="targetMarginRateDisplay">-</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">목표 대비</span>
+                        <span class="metric-value" id="targetGap">-</span>
+                        <span class="metric-badge" id="targetStatus">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Timing Guide -->
+            <div class="analysis-card timing-card">
+                <h3>발주 타이밍 가이드</h3>
+                <div class="timing-grid">
+                    <div class="timing-item">
+                        <div class="timing-icon break-even">⚖️</div>
+                        <div class="timing-content">
+                            <span class="timing-label">손익분기점 환율</span>
+                            <span class="timing-value" id="breakEvenRate">-</span>
+                            <span class="timing-message" id="breakEvenMessage">-</span>
+                        </div>
+                    </div>
+                    <div class="timing-item">
+                        <div class="timing-icon target">🎯</div>
+                        <div class="timing-content">
+                            <span class="timing-label">목표 달성 환율</span>
+                            <span class="timing-value" id="targetExchangeRate">-</span>
+                            <span class="timing-message" id="targetExchangeMessage">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exchange Rate Status Bar -->
+            <div class="analysis-card status-card">
+                <h3>현재 환율 상태</h3>
+                <div class="status-bar-container">
+                    <div class="status-bar">
+                        <div class="status-bar-fill"></div>
+                        <div class="status-indicator" id="statusIndicator"></div>
+                    </div>
+                    <div class="status-labels">
+                        <span class="status-label-min" id="statusMin">-</span>
+                        <span class="status-label-max" id="statusMax">-</span>
+                    </div>
+                </div>
+                <div class="status-info">
+                    <div class="status-badge" id="statusBadge">-</div>
+                    <p class="status-message" id="statusMessage">-</p>
+                </div>
+                <div class="ai-evaluation">
+                    <h4>🤖 AI 분석 의견</h4>
+                    <p id="aiEvaluation">-</p>
+                </div>
+            </div>
+
+            <!-- AI Monitoring Strategy -->
+            <div class="analysis-card strategy-card">
+                <h3>📊 환율 모니터링 전략</h3>
+                <div class="strategy-content" id="monitoringStrategy">-</div>
+            </div>
+
+            <!-- Scenario Analysis Chart -->
+            <div class="analysis-card chart-card">
+                <h3>환율 시나리오별 원가 및 마진</h3>
+                <canvas id="scenarioChart"></canvas>
+            </div>
+
+            <!-- Margin Rate Change Chart -->
+            <div class="analysis-card chart-card">
+                <h3>환율 변동에 따른 마진율 변화</h3>
+                <canvas id="marginRateChart"></canvas>
+            </div>
+
+            <!-- Detailed Cost Analysis -->
+            <div class="analysis-card detail-card">
+                <h3>상세 원가 분석</h3>
+                <div class="detail-summary">
+                    <div class="detail-row">
+                        <span class="detail-label">원자재 비용 (USD)</span>
+                        <span class="detail-value" id="detailMaterialUsd">-</span>
+                    </div>
+                    <div class="detail-row highlight">
+                        <span class="detail-label">적용 환율</span>
+                        <span class="detail-value" id="detailExchangeRate">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">원자재 비용 (KRW)</span>
+                        <span class="detail-value" id="detailMaterialKrw">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">기타 비용</span>
+                        <span class="detail-value" id="detailOtherCosts">-</span>
+                    </div>
+                    <div class="detail-divider"></div>
+                    <div class="detail-row total">
+                        <span class="detail-label">총 원가</span>
+                        <span class="detail-value" id="detailTotalCost">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">납품 단가</span>
+                        <span class="detail-value" id="detailSellingPrice">-</span>
+                    </div>
+                    <div class="detail-divider"></div>
+                    <div class="detail-row result">
+                        <span class="detail-label">순 마진</span>
+                        <span class="detail-value" id="detailNetMargin">-</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>© 2024 ForexPulse - 부울경 제조업 환율 분석 서비스</p>
+    </footer>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>분석 중...</p>
+        </div>
+    </div>
+
+    <!-- Exchange Rate Data for Chart -->
+    <script th:inline="javascript">
+        const exchangeRateData = {
+            labels: /*[[${exchangeRate.last30DaysRates.![#temporals.format(date, 'MM/dd')]}]]*/ [],
+            rates: /*[[${exchangeRate.last30DaysRates.![rate]}]]*/ []
+        };
+    </script>
+    <script th:src="@{/js/app.js}"></script>
+</body>
+</html>
