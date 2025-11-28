@@ -1,9 +1,13 @@
 package com.buulgyeong.forexanalyzer.external;
 
+import com.buulgyeong.forexanalyzer.dto.HistoricalRate;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -11,7 +15,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -43,7 +48,7 @@ public class ExchangeRateApiClient {
     public Optional<BigDecimal> fetchExchangeRateFromKoreaExim(LocalDate date) {
         try {
             String formattedDate = date.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-            
+
             String response = webClientBuilder.build()
                     .get()
                     .uri(koreaeximUrl + "?authkey=" + koreaeximApiKey + "&searchdate=" + formattedDate + "&data=AP01")
@@ -53,7 +58,7 @@ public class ExchangeRateApiClient {
 
             if (response != null && !response.isEmpty()) {
                 JsonNode rootNode = objectMapper.readTree(response);
-                
+
                 for (JsonNode node : rootNode) {
                     String currencyCode = node.get("cur_unit").asText();
                     if ("USD".equals(currencyCode)) {
@@ -67,6 +72,28 @@ public class ExchangeRateApiClient {
         }
         
         return Optional.empty();
+    }
+
+    /**
+     * 네이버페이 증권에서 실시간 환율 스크래핑
+     */
+    public BigDecimal fetchCurrentExchangeRateFromNaver() {
+        try {
+            Connection connection = Jsoup.connect("https://finance.naver.com/marketindex/exchangeDetail.naver?marketindexCd=FX_USDKRW");
+            Document document = connection.get();
+
+            Element p = document.select("p.no_today").first();
+            String rateStr = p.select("span:not(.txt_won)").stream()
+                    .map(Element::text)
+                    .collect(Collectors.joining())
+                    .replace(",", "");
+
+            return new BigDecimal(rateStr);
+
+        } catch (Exception e) {
+            log.warn("NAVER 환율 스크래핑 실패: {}", e.getMessage());
+            return BigDecimal.valueOf(1380.0);
+        }
     }
     
     /**
@@ -96,25 +123,44 @@ public class ExchangeRateApiClient {
         
         return Optional.empty();
     }
-    
-    /**
-     * 환율 조회 (메인 API 실패 시 백업 API 사용)
-     */
-    public BigDecimal fetchCurrentExchangeRate() {
-        // 먼저 한국수출입은행 API 시도
-        Optional<BigDecimal> rate = fetchExchangeRateFromKoreaExim(LocalDate.now());
-        
-        if (rate.isEmpty()) {
-            // 주말이나 공휴일의 경우 전날 데이터 시도
-            rate = fetchExchangeRateFromKoreaExim(LocalDate.now().minusDays(1));
+
+    public List<HistoricalRate> fetchLast30Days() {
+        List<HistoricalRate> rates = new ArrayList<>();
+        Map<LocalDate, BigDecimal> cache = new HashMap<>();
+        LocalDate today = LocalDate.now();
+
+        for (int i = 0; i < 30; i++) {
+            LocalDate targetDate = today.minusDays(i);
+            BigDecimal rate = null;
+            LocalDate cursor = targetDate;
+
+            int maxLookbackDays = 7;
+            int lookback = 0;
+
+            while (rate == null && lookback < maxLookbackDays) {
+                if (cache.containsKey(cursor)) {
+                    rate = cache.get(cursor);
+                } else {
+                    Optional<BigDecimal> rateOpt = fetchExchangeRateFromKoreaExim(cursor);
+                    if (rateOpt.isPresent()) {
+                        rate = rateOpt.get();
+                        cache.put(cursor, rate);
+                    } else {
+                        cursor = cursor.minusDays(1);
+                        lookback++;
+                    }
+                }
+            }
+
+            if (rate == null) {
+                rate = BigDecimal.valueOf(1380.0);
+            }
+
+            rates.add(0, new HistoricalRate(targetDate, rate));
+            cache.put(targetDate, rate);
         }
-        
-        if (rate.isEmpty()) {
-            // 백업 API 시도
-            rate = fetchExchangeRateFromBackup();
-        }
-        
-        // 모든 API 실패 시 기본값 반환 (실제 운영에서는 에러 처리 필요)
-        return rate.orElse(BigDecimal.valueOf(1380.0));
+
+        return rates;
     }
+
 }
