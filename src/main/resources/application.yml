@@ -35,7 +35,7 @@ spring:
 external:
   exchange-rate:
     koreaexim-url: https://oapi.koreaexim.go.kr/site/program/financial/exchangeJSON
-    koreaexim-api-key: aaa
+    koreaexim-api-key: ${KOREAEXIM_API_KEY:}
     backup-url: https://api.exchangerate-api.com/v4/latest/USD
 
   upstage:

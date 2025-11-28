@@ -28,10 +28,10 @@ public class FinalReportService {
     private final WebClient.Builder webClientBuilder;
     private final ObjectMapper objectMapper;
 
-    @Value("${upstage.api.base-url:https://api.upstage.ai}")
+    @Value("${external.upstage.api-url}")
     private String upstageBaseUrl;
 
-    @Value("${upstage.api.api-key:}")
+    @Value("${external.upstage.api-key:}")
     private String apiKey;
 
     /**
@@ -100,7 +100,11 @@ public class FinalReportService {
                 [작성 규칙]
                 1. 데이터 기반 분석만 작성하고, 과도한 추측이나 데이터에 없는 정보는 포함하지 않는다.
                 2. 비즈니스 전략·원가 관리 측면에서 해석을 명확히 포함한다.
-                                
+                3. **절대로** #, ##, ###, **, -, * 등 마크다운 문법을 사용하지 마라.
+                4. 번호 매기기(1. 2. 3.)와 줄바꿈만 사용해서 일반 텍스트로 작성하라.
+                5. 굵은 글씨, 기울임, 리스트 기호 사용 금지.
+                6. 문단이나 항목 사이에 빈 줄을 넣어서 구분하라.
+                                                 
                 [리포트 구성]
                 1. 요약(Summary)
                 2. 원가 구조 분석 (환율 영향 포함)
@@ -129,7 +133,7 @@ public class FinalReportService {
 
         String rawResponse = webClientBuilder.build()
                 .post()
-                .uri(upstageBaseUrl + "/v1/chat/completions") // 실제 엔드포인트에 맞게 조정하세요
+                .uri(upstageBaseUrl) // 실제 엔드포인트에 맞게 조정하세요
                 .header("Authorization", "Bearer " + apiKey)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestBody)

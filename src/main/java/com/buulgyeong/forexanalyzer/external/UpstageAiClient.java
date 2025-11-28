@@ -30,7 +30,7 @@ public class UpstageAiClient {
     public UpstageAiClient(
             WebClient.Builder webClientBuilder,
             ObjectMapper objectMapper,
-            @Value("${external.upstage.api-url}") String apiUrl,
+            @Value("${external.upstage.api-url:}") String apiUrl,
             @Value("${external.upstage.api-key:}") String apiKey) {
         this.webClientBuilder = webClientBuilder;
         this.objectMapper = objectMapper;
@@ -60,6 +60,15 @@ public class UpstageAiClient {
             1. 현재 환율 상태 평가 (발주 적합/부적합)
             2. 예상 마진 상황
             3. 발주 권장 여부
+            
+            [작성 규칙]
+            1. 데이터 기반 분석만 작성하고, 과도한 추측이나 데이터에 없는 정보는 포함하지 않는다.
+            2. 비즈니스 전략·원가 관리 측면에서 해석을 명확히 포함한다.
+            3. **절대로** #, ##, ###, **, -, * 등 마크다운 문법을 사용하지 마라.
+            4. 번호 매기기(1. 2. 3.)와 줄바꿈만 사용해서 일반 텍스트로 작성하라.
+            5. 굵은 글씨, 기울임, 리스트 기호 사용 금지.
+            6. 문단이나 항목 사이에 빈 줄을 넣어서 구분하라.
+            
             """, 
             currentRate.doubleValue(),
             breakEvenRate.doubleValue(),
@@ -97,6 +106,15 @@ public class UpstageAiClient {
             • 환율 모니터링 기준점
             • 환위험 헷지 전략
             • 재고 관리 관련 조언
+            
+            [작성 규칙]
+            1. 데이터 기반 분석만 작성하고, 과도한 추측이나 데이터에 없는 정보는 포함하지 않는다.
+            2. 비즈니스 전략·원가 관리 측면에서 해석을 명확히 포함한다.
+            3. **절대로** #, ##, ###, **, -, * 등 마크다운 문법을 사용하지 마라.
+            4. 번호 매기기(1. 2. 3.)와 줄바꿈만 사용해서 일반 텍스트로 작성하라.
+            5. 굵은 글씨, 기울임, 리스트 기호 사용 금지.
+            6. 문단이나 항목 사이에 빈 줄을 넣어서 구분하라.
+            
             """,
             currentRate.doubleValue(),
             breakEvenRate.doubleValue(),
@@ -129,6 +147,10 @@ public class UpstageAiClient {
                 [작성 규칙]
                 1. 데이터 기반 분석만 작성하고, 과도한 추측이나 데이터에 없는 정보는 포함하지 않는다.
                 2. 비즈니스 전략·원가 관리 측면에서 해석을 명확히 포함한다.
+                3. **절대로** #, ##, ###, **, -, * 등 마크다운 문법을 사용하지 마라.
+                4. 번호 매기기(1. 2. 3.)와 줄바꿈만 사용해서 일반 텍스트로 작성하라.
+                5. 굵은 글씨, 기울임, 리스트 기호 사용 금지.
+                6. 문단이나 항목 사이에 빈 줄을 넣어서 구분하라.
                 
                 [리포트 구성]
                 1. 요약(Summary)
